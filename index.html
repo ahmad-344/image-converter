@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Morphix — Image Format Converter</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=Figtree:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#080b0f;--bg2:#0d1117;--surface:#111820;--card:#141c26;
+  --border:#1e2a38;--border2:#263344;--text:#e8eef4;--text2:#8fa3b8;
+  --text3:#506070;--accent:#00d4ff;--accentlt:rgba(0,212,255,0.07);
+  --accentmd:rgba(0,212,255,0.15);--green:#00c896;--greenlt:rgba(0,200,150,0.1);
+  --red:#ff4d6a;--glow:0 0 40px rgba(0,212,255,0.12);
+}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:'Figtree',sans-serif;min-height:100vh;overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(0,212,255,0.025) 1px,transparent 1px),linear-gradient(90deg,rgba(0,212,255,0.025) 1px,transparent 1px);background-size:60px 60px;pointer-events:none;z-index:0}
+body::after{content:'';position:fixed;top:-200px;left:50%;transform:translateX(-50%);width:800px;height:600px;background:radial-gradient(ellipse,rgba(0,212,255,0.06) 0%,transparent 70%);pointer-events:none;z-index:0}
+nav{position:fixed;top:0;left:0;right:0;z-index:500;height:62px;display:flex;align-items:center;justify-content:space-between;padding:0 44px;background:rgba(8,11,15,0.88);backdrop-filter:blur(20px);border-bottom:1px solid var(--border)}
+.nav-logo{font-family:'Playfair Display',serif;font-size:24px;font-weight:900;color:var(--text);letter-spacing:-0.5px}
+.nav-logo em{font-style:italic;color:var(--accent)}
+.nav-chips{display:flex;gap:6px;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:5px 6px}
+.chip{font-size:10px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;padding:5px 12px;border-radius:5px;color:var(--text3)}
+.chip.on{background:var(--accentlt);color:var(--accent);border:1px solid rgba(0,212,255,0.2)}
+.nav-r{font-size:12px;color:var(--text3)}
+.nav-r strong{color:var(--accent);font-family:'Playfair Display',serif;font-size:17px}
+.hero{position:relative;z-index:1;padding:120px 44px 56px;max-width:1200px;margin:0 auto;display:grid;grid-template-columns:1fr 320px;gap:56px;align-items:center}
+.eyebrow{display:inline-flex;align-items:center;gap:10px;font-size:11px;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;color:var(--accent);margin-bottom:22px}
+.eyebrow::before{content:'';display:block;width:28px;height:1px;background:var(--accent)}
+h1{font-family:'Playfair Display',serif;font-size:clamp(46px,6vw,86px);font-weight:900;line-height:0.97;letter-spacing:-2px;color:var(--text);margin-bottom:22px}
+h1 em{font-style:italic;color:var(--accent)}
+h1 .ghost{-webkit-text-stroke:1px rgba(232,238,244,0.18);color:transparent}
+.hero-desc{font-size:15px;color:var(--text2);line-height:1.8;font-weight:300;max-width:480px;margin-bottom:32px}
+.hero-tags{display:flex;flex-wrap:wrap;gap:8px}
+.tag{font-size:11px;font-weight:600;letter-spacing:0.4px;padding:6px 13px;border-radius:6px;border:1px solid var(--border2);color:var(--text2);background:var(--surface)}
+.tag.a{border-color:rgba(0,212,255,0.3);color:var(--accent);background:var(--accentlt)}
+.stat-card{background:var(--card);border:1px solid var(--border);border-radius:20px;padding:32px;position:relative;overflow:hidden}
+.stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--accent),transparent)}
+.si{padding:20px 0;border-bottom:1px solid var(--border)}
+.si:last-child{border-bottom:none;padding-bottom:0}
+.si:first-child{padding-top:0}
+.sn{font-family:'Playfair Display',serif;font-size:46px;font-weight:900;color:var(--accent);line-height:1;letter-spacing:-2px}
+.sl{font-size:10px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--text3);margin-top:4px}
+.divrow{position:relative;z-index:1;max-width:1200px;margin:0 auto 36px;padding:0 44px;display:flex;align-items:center;gap:18px}
+.divline{flex:1;height:1px;background:var(--border)}
+.divlabel{font-size:10px;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;color:var(--text3);white-space:nowrap}
+.fmt-section{position:relative;z-index:1;max-width:1200px;margin:0 auto;padding:0 44px 36px}
+.sec-hdr{display:flex;align-items:baseline;gap:14px;margin-bottom:20px}
+.sec-title{font-family:'Playfair Display',serif;font-size:20px;font-weight:700;color:var(--text)}
+.sec-sub{font-size:12px;color:var(--text3)}
+.fmt-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:12px}
+.fmtb{cursor:pointer;background:var(--card);border:1px solid var(--border);border-radius:14px;padding:22px 16px;text-align:left;transition:all 0.25s;position:relative;overflow:hidden;display:flex;flex-direction:column;gap:6px}
+.fmtb:hover{border-color:var(--border2);transform:translateY(-3px);box-shadow:0 12px 32px rgba(0,0,0,0.35),var(--glow)}
+.fmtb.active{border-color:var(--accent);background:var(--accentlt);box-shadow:0 0 0 1px var(--accent),var(--glow)}
+.fmtb-ext{font-family:'Playfair Display',serif;font-size:26px;font-weight:900;color:var(--text);letter-spacing:-1px;line-height:1;transition:color 0.2s}
+.fmtb.active .fmtb-ext{color:var(--accent)}
+.fmtb-name{font-size:11px;font-weight:500;color:var(--text3)}
+.fmtb-badge{position:absolute;top:9px;right:9px;font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;padding:2px 7px;border-radius:4px;background:var(--accentmd);color:var(--accent);border:1px solid rgba(0,212,255,0.2)}
+.sbar{position:relative;z-index:1;max-width:1200px;margin:0 auto 28px;padding:0 44px}
+.sbar-inner{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:18px 26px;display:flex;align-items:center;gap:28px;flex-wrap:wrap}
+.sg{display:flex;align-items:center;gap:13px}
+.slbl{font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--text3);white-space:nowrap}
+.qsl{-webkit-appearance:none;width:130px;height:3px;background:var(--border2);border-radius:2px;outline:none;cursor:pointer}
+.qsl::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;background:var(--accent);border-radius:50%;cursor:pointer;box-shadow:0 0 8px rgba(0,212,255,0.5);transition:transform 0.15s}
+.qsl::-webkit-slider-thumb:hover{transform:scale(1.3)}
+.qval{font-family:'Playfair Display',serif;font-size:19px;font-weight:700;color:var(--accent);min-width:44px}
+.rsz{display:flex;align-items:center;gap:8px}
+.ri{width:76px;padding:7px 10px;background:var(--surface);border:1px solid var(--border2);border-radius:8px;color:var(--text);font-family:'Figtree',sans-serif;font-size:13px;outline:none;transition:border-color 0.2s}
+.ri:focus{border-color:var(--accent)}
+.ri::placeholder{color:var(--text3);font-size:11px}
+.rsep{font-size:13px;color:var(--text3)}
+.lockb{width:30px;height:30px;background:var(--surface);border:1px solid var(--border2);border-radius:7px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--text3);transition:all 0.2s}
+.lockb.on{border-color:rgba(0,212,255,0.4);color:var(--accent);background:var(--accentlt)}
+.sbar-actions{margin-left:auto;display:flex;gap:10px}
+.btn{display:inline-flex;align-items:center;gap:7px;padding:10px 20px;border-radius:10px;border:none;font-family:'Figtree',sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:all 0.2s;white-space:nowrap;letter-spacing:0.2px}
+.btn-p{background:var(--accent);color:#000;box-shadow:0 4px 16px rgba(0,212,255,0.25)}
+.btn-p:hover:not(:disabled){background:#22dfff;transform:translateY(-2px);box-shadow:0 8px 28px rgba(0,212,255,0.35)}
+.btn-p:disabled{opacity:0.35;cursor:not-allowed}
+.btn-g{background:transparent;color:var(--text3);border:1px solid var(--border2)}
+.btn-g:hover:not(:disabled){color:var(--red);border-color:rgba(255,77,106,0.4);background:rgba(255,77,106,0.06)}
+.btn-g:disabled{opacity:0.35;cursor:not-allowed}
+.btn-o{background:transparent;color:var(--text);border:1px solid var(--border2)}
+.btn-o:hover:not(:disabled){background:var(--surface);border-color:var(--accent);color:var(--accent)}
+.btn-o:disabled{opacity:0.35;cursor:not-allowed}
+.dsect{position:relative;z-index:1;max-width:1200px;margin:0 auto 20px;padding:0 44px}
+.dzone{border:2px dashed var(--border2);border-radius:20px;padding:80px 40px;text-align:center;cursor:pointer;transition:all 0.3s;background:var(--card);position:relative;overflow:hidden}
+.dzone::before{content:'';position:absolute;inset:0;background:radial-gradient(circle at 50% 50%,rgba(0,212,255,0.04) 0%,transparent 70%);opacity:0;transition:opacity 0.3s}
+.dzone.over,.dzone:hover{border-color:var(--accent)}
+.dzone.over{background:rgba(0,212,255,0.03)}
+.dzone.over::before,.dzone:hover::before{opacity:1}
+.dzone.has-files{display:none}
+.dicon{width:70px;height:70px;margin:0 auto 26px;background:var(--surface);border:1px solid var(--border2);border-radius:18px;display:flex;align-items:center;justify-content:center;transition:all 0.3s}
+.dicon svg{width:30px;height:30px;stroke:var(--text3);fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round;transition:stroke 0.3s}
+.dzone:hover .dicon,.dzone.over .dicon{transform:scale(1.08) rotate(-6deg);border-color:var(--accent);background:var(--accentlt)}
+.dzone:hover .dicon svg,.dzone.over .dicon svg{stroke:var(--accent)}
+.dtitle{font-family:'Playfair Display',serif;font-size:30px;font-weight:900;letter-spacing:-1px;color:var(--text);margin-bottom:10px}
+.dsub{font-size:14px;color:var(--text2);line-height:1.7;margin-bottom:26px;font-weight:300}
+.dsub strong{color:var(--accent);font-weight:600}
+.dfmts{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-bottom:30px}
+.dfmt{font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;padding:4px 11px;border-radius:5px;background:var(--surface);border:1px solid var(--border2);color:var(--text3)}
+.browsebtn{background:var(--accent);color:#000;border:none;padding:14px 38px;border-radius:10px;font-family:'Figtree',sans-serif;font-size:14px;font-weight:700;cursor:pointer;transition:all 0.2s;box-shadow:0 4px 20px rgba(0,212,255,0.25)}
+.browsebtn:hover{background:#22dfff;transform:translateY(-2px);box-shadow:0 10px 32px rgba(0,212,255,0.35)}
+#fi{display:none}
+.addmore{position:relative;z-index:1;max-width:1200px;margin:0 auto 18px;padding:0 44px;display:none}
+.addmore.show{display:block}
+.ambt{width:100%;padding:14px;background:transparent;border:1px dashed var(--border2);border-radius:12px;color:var(--text3);font-family:'Figtree',sans-serif;font-size:13px;font-weight:500;cursor:pointer;transition:all 0.2s}
+.ambt:hover{border-color:var(--accent);color:var(--accent);background:var(--accentlt)}
+.psect{position:relative;z-index:1;max-width:1200px;margin:0 auto 18px;padding:0 44px;display:none}
+.psect.show{display:block}
+.phdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.ptxt{font-size:13px;font-weight:500;color:var(--text2)}
+.ppct{font-family:'Playfair Display',serif;font-size:15px;font-weight:700;color:var(--accent)}
+.po{height:4px;background:var(--border);border-radius:2px;overflow:hidden}
+.pi{height:100%;background:linear-gradient(90deg,var(--accent),#00ffcc);border-radius:2px;width:0%;transition:width 0.35s ease;box-shadow:0 0 8px rgba(0,212,255,0.4)}
+.gsect{position:relative;z-index:1;max-width:1200px;margin:0 auto;padding:0 44px 130px;display:none}
+.gsect.show{display:block}
+.ghdr{display:flex;align-items:center;justify-content:space-between;padding:22px 0 18px;border-bottom:1px solid var(--border);margin-bottom:22px;flex-wrap:wrap;gap:12px}
+.gtitle{font-family:'Playfair Display',serif;font-size:20px;font-weight:700;color:var(--text);display:flex;align-items:center;gap:10px}
+.gbadge{font-family:'Figtree',sans-serif;font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;background:var(--accent);color:#000}
+.gmeta{display:flex;gap:22px;align-items:center}
+.gmi{font-size:12px;color:var(--text3)}
+.gmi strong{color:var(--text);font-weight:600}
+.gmi .gd{color:var(--green)}
+.igrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(205px,1fr));gap:14px}
+.icard{background:var(--card);border:1px solid var(--border);border-radius:14px;overflow:hidden;transition:all 0.25s;animation:riseIn 0.38s ease forwards;opacity:0;transform:translateY(14px)}
+@keyframes riseIn{to{opacity:1;transform:translateY(0)}}
+.icard:hover{border-color:var(--border2);transform:translateY(-3px);box-shadow:0 12px 32px rgba(0,0,0,0.4)}
+.icard.converting{border-color:rgba(0,212,255,0.3)}
+.icard.done{border-color:rgba(0,200,150,0.3)}
+.icard.error{border-color:rgba(255,77,106,0.3)}
+.tbox{position:relative;height:146px;background:var(--surface);overflow:hidden}
+.timg{width:100%;height:100%;object-fit:cover;transition:transform 0.3s}
+.icard:hover .timg{transform:scale(1.04)}
+.tovl{position:absolute;inset:0;background:rgba(8,11,15,0.78);display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity 0.2s}
+.icard.converting .tovl{opacity:1}
+.spinner{width:30px;height:30px;border:2.5px solid rgba(0,212,255,0.15);border-top-color:var(--accent);border-radius:50%;animation:spin 0.75s linear infinite;box-shadow:0 0 12px rgba(0,212,255,0.3)}
+@keyframes spin{to{transform:rotate(360deg)}}
+.tfrom{position:absolute;top:8px;left:8px;font-size:9px;font-weight:800;letter-spacing:1px;text-transform:uppercase;padding:3px 7px;border-radius:5px;background:rgba(8,11,15,0.82);color:var(--text2);border:1px solid rgba(255,255,255,0.07)}
+.tstatus{position:absolute;bottom:8px;right:8px;font-size:9px;font-weight:800;letter-spacing:1px;text-transform:uppercase;padding:3px 8px;border-radius:5px;display:none}
+.icard.done .tstatus{display:block;background:var(--green);color:#000}
+.icard.error .tstatus{display:block;background:var(--red);color:#fff}
+.cbody{padding:12px 14px 6px}
+.cname{font-size:12px;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:6px}
+.crow{display:flex;align-items:center;gap:5px}
+.cff{font-size:10px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;padding:2px 7px;border-radius:4px;background:var(--surface);color:var(--text3);border:1px solid var(--border2)}
+.carr{font-size:10px;color:var(--accent)}
+.cft{font-size:10px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;padding:2px 7px;border-radius:4px;background:var(--accentlt);color:var(--accent);border:1px solid rgba(0,212,255,0.2)}
+.csz{margin-left:auto;font-size:10px;color:var(--text3)}
+.cfoot{display:flex;gap:6px;padding:6px 10px 10px}
+.dlbtn{flex:1;padding:7px 10px;background:var(--greenlt);border:1px solid rgba(0,200,150,0.25);color:var(--green);font-family:'Figtree',sans-serif;font-size:11px;font-weight:700;border-radius:7px;cursor:pointer;transition:all 0.2s;display:none;text-align:center}
+.dlbtn:hover{background:rgba(0,200,150,0.18)}
+.icard.done .dlbtn{display:block}
+.rmbtn{padding:7px 10px;background:transparent;border:1px solid var(--border2);color:var(--text3);font-size:11px;border-radius:7px;cursor:pointer;transition:all 0.2s}
+.rmbtn:hover{border-color:rgba(255,77,106,0.4);color:var(--red);background:rgba(255,77,106,0.06)}
+.bbar{position:fixed;bottom:0;left:0;right:0;z-index:300;background:rgba(8,11,15,0.96);backdrop-filter:blur(24px);border-top:1px solid var(--border2);padding:18px 44px;display:none;align-items:center;justify-content:space-between;gap:20px;transform:translateY(100%);transition:transform 0.42s cubic-bezier(0.34,1.56,0.64,1);box-shadow:0 -8px 40px rgba(0,0,0,0.4)}
+.bbar.show{display:flex;transform:translateY(0)}
+.bbar::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--accent),transparent);opacity:0.55}
+.bl{display:flex;flex-direction:column;gap:3px}
+.btitle{font-family:'Playfair Display',serif;font-size:18px;font-weight:700;color:var(--text)}
+.bsub{font-size:12px;color:var(--text3)}
+.bsub span{color:var(--accent);font-weight:600}
+footer{position:relative;z-index:1;background:var(--bg2);border-top:1px solid var(--border);padding:56px 44px 0}
+.fi{max-width:1200px;margin:0 auto;display:grid;grid-template-columns:1.4fr 1fr 1fr;gap:44px;padding-bottom:44px;border-bottom:1px solid var(--border)}
+.fbrand{font-family:'Playfair Display',serif;font-size:26px;font-weight:900;color:var(--text);letter-spacing:-0.5px;margin-bottom:12px}
+.fbrand em{font-style:italic;color:var(--accent)}
+.ftag{font-size:13px;color:var(--text3);line-height:1.8;font-weight:300;max-width:290px}
+.fct{font-size:10px;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;color:var(--text3);margin-bottom:16px}
+.ffmts{display:flex;flex-wrap:wrap;gap:8px}
+.ffmt{font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;padding:4px 10px;border-radius:5px;background:var(--surface);border:1px solid var(--border);color:var(--text3);transition:all 0.2s;cursor:default}
+.ffmt:hover{border-color:rgba(0,212,255,0.3);color:var(--accent);background:var(--accentlt)}
+.fsg{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.fsb{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px}
+.fsv{font-family:'Playfair Display',serif;font-size:24px;font-weight:900;color:var(--accent);line-height:1;letter-spacing:-1px}
+.fsl{font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--text3);margin-top:4px}
+.fbot{max-width:1200px;margin:0 auto;padding:18px 0;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px}
+.fcopy{font-size:11px;color:var(--text3)}
+.fnote{font-size:11px;color:var(--border2)}
+@media(max-width:900px){
+  nav{padding:0 20px}.nav-chips{display:none}
+  .hero{grid-template-columns:1fr;padding:100px 20px 44px;gap:28px}
+  .stat-card{display:flex;flex-direction:row;padding:16px}
+  .si{flex:1;border-bottom:none;border-right:1px solid var(--border);padding:0 16px}
+  .si:last-child{border-right:none}
+  .sn{font-size:32px}
+  .fmt-section,.sbar,.dsect,.addmore,.psect,.gsect{padding-left:20px;padding-right:20px}
+  .fmt-grid{grid-template-columns:repeat(3,1fr)}
+  .sbar-inner{gap:14px}
+  .bbar{padding:14px 20px;flex-wrap:wrap}
+  footer{padding:36px 20px 0}
+  .fi{grid-template-columns:1fr;gap:28px}
+  .igrid{grid-template-columns:repeat(auto-fill,minmax(158px,1fr));gap:10px}
+  .divrow{padding:0 20px}
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-logo">Mor<em>phix</em></div>
+  <div class="nav-chips">
+    <div class="chip on">Live</div>
+    <div class="chip">100% Free</div>
+    <div class="chip">No Server</div>
+  </div>
+  <div class="nav-r">Images loaded: <strong id="hc">0</strong></div>
+</nav>
+
+<section class="hero">
+  <div>
+    <div class="eyebrow">Image Format Converter</div>
+    <h1>Convert Any<br>Image to <em>Any</em><br><span class="ghost">Format.</span></h1>
+    <p class="hero-desc">Upload up to 100 images and convert them all to your chosen format in seconds. Everything runs inside your browser — nothing is sent to any server.</p>
+    <div class="hero-tags">
+      <span class="tag a">WebP</span>
+      <span class="tag a">JPEG</span>
+      <span class="tag a">PNG</span>
+      <span class="tag a">BMP</span>
+      <span class="tag a">GIF</span>
+      <span class="tag">100 Images at Once</span>
+      <span class="tag">No Account Needed</span>
+      <span class="tag">Zero Data Shared</span>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="si"><div class="sn">5</div><div class="sl">Output Formats</div></div>
+    <div class="si"><div class="sn">100</div><div class="sl">Max Images</div></div>
+    <div class="si"><div class="sn">0s</div><div class="sl">Server Wait</div></div>
+  </div>
+</section>
+
+<div class="divrow"><div class="divline"></div><div class="divlabel">Step 1 — Choose Output Format</div><div class="divline"></div></div>
+
+<section class="fmt-section">
+  <div class="fmt-grid" id="fmtGrid">
+    <div class="fmtb active" data-fmt="image/webp" data-ext="webp">
+      <span class="fmtb-badge">Best</span>
+      <div class="fmtb-ext">.WEBP</div>
+      <div class="fmtb-name">Smallest file size</div>
+    </div>
+    <div class="fmtb" data-fmt="image/jpeg" data-ext="jpg">
+      <div class="fmtb-ext">.JPEG</div>
+      <div class="fmtb-name">Universal support</div>
+    </div>
+    <div class="fmtb" data-fmt="image/png" data-ext="png">
+      <div class="fmtb-ext">.PNG</div>
+      <div class="fmtb-name">Lossless + alpha</div>
+    </div>
+    <div class="fmtb" data-fmt="image/bmp" data-ext="bmp">
+      <div class="fmtb-ext">.BMP</div>
+      <div class="fmtb-name">Uncompressed bitmap</div>
+    </div>
+    <div class="fmtb" data-fmt="image/gif" data-ext="gif">
+      <div class="fmtb-ext">.GIF</div>
+      <div class="fmtb-name">256 color palette</div>
+    </div>
+  </div>
+</section>
+
+<div class="divrow" style="margin-top:8px"><div class="divline"></div><div class="divlabel">Step 2 — Settings</div><div class="divline"></div></div>
+
+<div class="sbar">
+  <div class="sbar-inner">
+    <div class="sg">
+      <span class="slbl">Quality</span>
+      <input type="range" class="qsl" id="qsl" min="1" max="100" value="90">
+      <span class="qval" id="qval">90%</span>
+    </div>
+    <div class="sg">
+      <span class="slbl">Resize</span>
+      <div class="rsz">
+        <input type="number" class="ri" id="rW" placeholder="Width px" min="1" max="8000">
+        <span class="rsep">×</span>
+        <input type="number" class="ri" id="rH" placeholder="Height px" min="1" max="8000">
+        <button class="lockb on" id="lb" title="Lock aspect ratio">&#128274;</button>
+      </div>
+    </div>
+    <div class="sbar-actions">
+      <button class="btn btn-g" id="clearBtn" disabled>Clear All</button>
+      <button class="btn btn-p" id="convertBtn" disabled>Convert All</button>
+    </div>
+  </div>
+</div>
+
+<div class="divrow" style="margin-top:8px"><div class="divline"></div><div class="divlabel">Step 3 — Upload Images</div><div class="divline"></div></div>
+
+<div class="dsect">
+  <div class="dzone" id="dz">
+    <div class="dicon">
+      <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+    </div>
+    <div class="dtitle">Drop Images Here</div>
+    <p class="dsub">Drag &amp; drop up to <strong>100 images</strong> at once, or click to browse<br>Supports WebP, JPEG, PNG, BMP, GIF, TIFF, AVIF, SVG and more</p>
+    <div class="dfmts">
+      <span class="dfmt">WebP</span><span class="dfmt">JPEG</span><span class="dfmt">PNG</span>
+      <span class="dfmt">BMP</span><span class="dfmt">GIF</span><span class="dfmt">TIFF</span>
+      <span class="dfmt">AVIF</span><span class="dfmt">SVG</span>
+    </div>
+    <button class="browsebtn" onclick="document.getElementById('fi').click()">Browse Files</button>
+    <input type="file" id="fi" multiple accept="image/*">
+  </div>
+</div>
+
+<div class="addmore" id="am">
+  <button class="ambt" onclick="document.getElementById('fi').click()">
+    + Add More Images &nbsp;&mdash;&nbsp; <span id="amc">0</span> / 100 loaded
+  </button>
+</div>
+
+<div class="psect" id="ps">
+  <div class="phdr">
+    <span class="ptxt" id="ptxt">Converting images...</span>
+    <span class="ppct" id="ppct">0%</span>
+  </div>
+  <div class="po"><div class="pi" id="pb"></div></div>
+</div>
+
+<div class="gsect" id="gs">
+  <div class="ghdr">
+    <div class="gtitle">Your Images <span class="gbadge" id="gb">0</span></div>
+    <div class="gmeta" id="gm" style="display:none">
+      <div class="gmi">Total: <strong id="mt">0</strong></div>
+      <div class="gmi">Converted: <strong class="gd" id="md">0</strong></div>
+      <div class="gmi">Output: <strong id="mf">—</strong></div>
+    </div>
+  </div>
+  <div class="igrid" id="ig"></div>
+</div>
+
+<div class="bbar" id="bb">
+  <div class="bl">
+    <div class="btitle">All Conversions Complete</div>
+    <div class="bsub"><span id="bc">0</span> images converted to <span id="bf">WebP</span></div>
+  </div>
+  <div style="display:flex;gap:10px">
+    <button class="btn btn-o" onclick="convertAll()">Re-convert</button>
+    <button class="btn btn-p" id="dlab" onclick="dlAll()">Download All (<span id="dc">0</span>)</button>
+  </div>
+</div>
+
+<footer>
+  <div class="fi">
+    <div>
+      <div class="fbrand">Mor<em>phix</em></div>
+      <p class="ftag">A free, browser-based image format converter. Convert up to 100 images at once with no server uploads. Your files never leave your device.</p>
+    </div>
+    <div>
+      <div class="fct">Supported Formats</div>
+      <div class="ffmts">
+        <span class="ffmt">WebP</span><span class="ffmt">JPEG</span><span class="ffmt">PNG</span>
+        <span class="ffmt">BMP</span><span class="ffmt">GIF</span><span class="ffmt">TIFF</span>
+        <span class="ffmt">AVIF</span><span class="ffmt">SVG</span>
+      </div>
+    </div>
+    <div>
+      <div class="fct">Key Facts</div>
+      <div class="fsg">
+        <div class="fsb"><div class="fsv">100</div><div class="fsl">Max Images</div></div>
+        <div class="fsb"><div class="fsv">5</div><div class="fsl">Output Formats</div></div>
+        <div class="fsb"><div class="fsv">0</div><div class="fsl">Server Uploads</div></div>
+        <div class="fsb"><div class="fsv">Free</div><div class="fsl">Always</div></div>
+      </div>
+    </div>
+  </div>
+  <div class="fbot">
+    <span class="fcopy">2025 Morphix. All rights reserved.</span>
+    <span class="fnote">Client-side processing only. No cookies. No tracking. No advertisements.</span>
+  </div>
+</footer>
+
+<script>
+const S={images:[],id:0,fmt:'image/webp',ext:'webp',quality:0.9,lock:true,ratios:{},busy:false};
+const MAX=100;
+const $=id=>document.getElementById(id);
+const dz=$('dz'),fi=$('fi'),ig=$('ig'),gs=$('gs'),am=$('am');
+const gb=$('gb'),convertBtn=$('convertBtn'),clearBtn=$('clearBtn');
+const ps=$('ps'),pb=$('pb'),ptxt=$('ptxt'),ppct=$('ppct'),bb=$('bb');
+
+document.querySelectorAll('.fmtb').forEach(b=>{
+  b.addEventListener('click',()=>{
+    document.querySelectorAll('.fmtb').forEach(x=>x.classList.remove('active'));
+    b.classList.add('active');
+    S.fmt=b.dataset.fmt; S.ext=b.dataset.ext;
+    document.querySelectorAll('.cft').forEach(e=>e.textContent=S.ext.toUpperCase());
+  });
+});
+
+$('qsl').addEventListener('input',e=>{
+  S.quality=e.target.value/100;
+  $('qval').textContent=e.target.value+'%';
+});
+
+const lb=$('lb');
+lb.addEventListener('click',()=>{
+  S.lock=!S.lock;
+  lb.classList.toggle('on',S.lock);
+  lb.innerHTML=S.lock?'&#128274;':'&#128275;';
+});
+
+const rW=$('rW'),rH=$('rH');
+rW.addEventListener('input',()=>{
+  if(!S.lock||!rW.value)return;
+  const f=S.images[0];
+  if(f&&S.ratios[f.id]){const r=S.ratios[f.id];rH.value=Math.round(parseInt(rW.value)*r.h/r.w)||'';}
+});
+rH.addEventListener('input',()=>{
+  if(!S.lock||!rH.value)return;
+  const f=S.images[0];
+  if(f&&S.ratios[f.id]){const r=S.ratios[f.id];rW.value=Math.round(parseInt(rH.value)*r.w/r.h)||'';}
+});
+
+dz.addEventListener('dragover',e=>{e.preventDefault();dz.classList.add('over');});
+dz.addEventListener('dragleave',()=>dz.classList.remove('over'));
+dz.addEventListener('drop',e=>{e.preventDefault();dz.classList.remove('over');go(e.dataTransfer.files);});
+dz.addEventListener('click',()=>fi.click());
+document.addEventListener('dragover',e=>e.preventDefault());
+document.addEventListener('drop',e=>{e.preventDefault();if(!dz.contains(e.target))go(e.dataTransfer.files);});
+fi.addEventListener('change',e=>{go(e.target.files);fi.value='';});
+
+function go(files){
+  const valid=Array.from(files).filter(f=>f.type.startsWith('image/'));
+  valid.slice(0,MAX-S.images.length).forEach((f,i)=>{
+    const id=S.id++,url=URL.createObjectURL(f);
+    const item={id,file:f,url,blob:null,status:'pending'};
+    S.images.push(item);
+    const img=new Image();
+    img.onload=()=>{S.ratios[id]={w:img.naturalWidth,h:img.naturalHeight};};
+    img.src=url;
+    addCard(item,i);
+  });
+  refresh();
+}
+
+function addCard(item,d=0){
+  const ext=(item.file.name.split('.').pop()||item.file.type.split('/')[1]||'?').toUpperCase();
+  const c=document.createElement('div');
+  c.className='icard';c.id='c'+item.id;
+  c.style.animationDelay=(d%10*40)+'ms';
+  c.innerHTML=`<div class="tbox">
+    <img class="timg" src="${item.url}" alt="">
+    <div class="tovl"><div class="spinner"></div></div>
+    <div class="tfrom">${ext}</div>
+    <div class="tstatus" id="ts${item.id}">Done</div>
+  </div>
+  <div class="cbody">
+    <div class="cname" title="${item.file.name}">${item.file.name}</div>
+    <div class="crow">
+      <span class="cff">${ext}</span>
+      <span class="carr">&#8594;</span>
+      <span class="cft">${S.ext.toUpperCase()}</span>
+      <span class="csz">${fb(item.file.size)}</span>
+    </div>
+  </div>
+  <div class="cfoot">
+    <button class="dlbtn" onclick="dlOne(${item.id})">Download</button>
+    <button class="rmbtn" onclick="rm(${item.id})">&#10005;</button>
+  </div>`;
+  ig.appendChild(c);
+}
+
+function syncCard(item){
+  const c=document.getElementById('c'+item.id);if(!c)return;
+  c.className='icard '+item.status;
+  const ts=document.getElementById('ts'+item.id);
+  if(ts)ts.textContent=item.status==='error'?'Error':'Done';
+}
+
+function rm(id){
+  const i=S.images.findIndex(x=>x.id===id);if(i===-1)return;
+  URL.revokeObjectURL(S.images[i].url);S.images.splice(i,1);
+  document.getElementById('c'+id)?.remove();refresh();
+}
+
+clearBtn.addEventListener('click',()=>{
+  S.images.forEach(i=>URL.revokeObjectURL(i.url));
+  S.images=[];ig.innerHTML='';refresh();
+});
+
+function refresh(){
+  const n=S.images.length;
+  gb.textContent=n;$('hc').textContent=n;$('amc').textContent=n;
+  convertBtn.disabled=n===0||S.busy;
+  clearBtn.disabled=n===0||S.busy;
+  if(n>0){dz.classList.add('has-files');gs.classList.add('show');am.classList.add('show');}
+  else{dz.classList.remove('has-files');gs.classList.remove('show');am.classList.remove('show');bb.classList.remove('show');ps.classList.remove('show');}
+  meta();
+}
+
+function meta(){
+  const done=S.images.filter(i=>i.status==='done').length;
+  const total=S.images.length;
+  $('mt').textContent=total;$('md').textContent=done;$('mf').textContent=S.ext.toUpperCase();
+  if(total>0)$('gm').style.display='flex';
+  $('bc').textContent=done;$('bf').textContent=S.ext.toUpperCase();$('dc').textContent=done;
+}
+
+convertBtn.addEventListener('click',convertAll);
+
+async function convertAll(){
+  let items=S.images.filter(i=>i.status==='pending'||i.status==='error');
+  if(!items.length){S.images.forEach(i=>{i.status='pending';i.blob=null;syncCard(i);});items=[...S.images];}
+  S.busy=true;convertBtn.disabled=true;clearBtn.disabled=true;
+  ps.classList.add('show');bb.classList.remove('show');
+  let done=0,total=items.length;
+  for(let i=0;i<items.length;i+=4){
+    const batch=items.slice(i,i+4);
+    await Promise.all(batch.map(async item=>{
+      item.status='converting';syncCard(item);
+      try{item.blob=await doConvert(item.file);item.status='done';}
+      catch{item.status='error';}
+      done++;
+      const pct=Math.round(done/total*100);
+      pb.style.width=pct+'%';ppct.textContent=pct+'%';
+      ptxt.textContent=`Converting... ${done} of ${total}`;
+      syncCard(item);meta();
+    }));
+  }
+  S.busy=false;convertBtn.disabled=false;clearBtn.disabled=false;
+  ptxt.textContent='Conversion complete.';
+  if(S.images.filter(i=>i.status==='done').length>0){
+    bb.style.display='flex';setTimeout(()=>bb.classList.add('show'),50);
+  }
+  setTimeout(()=>{ps.classList.remove('show');pb.style.width='0%';ppct.textContent='0%';ptxt.textContent='Converting images...';},2500);
+}
+
+function doConvert(file){
+  return new Promise((res,rej)=>{
+    const img=new Image(),url=URL.createObjectURL(file);
+    img.onload=()=>{
+      URL.revokeObjectURL(url);
+      const tw=rW.value?parseInt(rW.value):img.naturalWidth;
+      const th=rH.value?parseInt(rH.value):img.naturalHeight;
+      const cv=document.createElement('canvas');cv.width=tw;cv.height=th;
+      const ctx=cv.getContext('2d');
+      if(S.fmt==='image/jpeg'||S.fmt==='image/bmp'){ctx.fillStyle='#fff';ctx.fillRect(0,0,tw,th);}
+      ctx.drawImage(img,0,0,tw,th);
+      const q=['image/png','image/bmp','image/gif'].includes(S.fmt)?undefined:S.quality;
+      cv.toBlob(b=>b?res(b):rej(new Error('fail')),S.fmt,q);
+    };
+    img.onerror=rej;img.src=url;
+  });
+}
+
+function dlOne(id){
+  const item=S.images.find(i=>i.id===id);if(!item?.blob)return;
+  const base=item.file.name.replace(/\.[^.]+$/,'');
+  const url=URL.createObjectURL(item.blob);
+  const a=document.createElement('a');a.href=url;a.download=`${base}.${S.ext}`;a.click();
+  URL.revokeObjectURL(url);
+}
+
+async function dlAll(){
+  const ready=S.images.filter(i=>i.status==='done'&&i.blob);if(!ready.length)return;
+  const btn=$('dlab');btn.disabled=true;btn.textContent='Preparing ZIP...';
+  if(ready.length===1){dlOne(ready[0].id);btn.disabled=false;btn.innerHTML=`Download All (<span id="dc">${ready.length}</span>)`;return;}
+  try{
+    await loadZip();
+    const zip=new JSZip();
+    ready.forEach(item=>{const base=item.file.name.replace(/\.[^.]+$/,'');zip.file(`${base}.${S.ext}`,item.blob);});
+    const content=await zip.generateAsync({type:'blob',compression:'STORE'});
+    const url=URL.createObjectURL(content);
+    const a=document.createElement('a');a.href=url;a.download=`morphix_${S.ext}.zip`;a.click();
+    URL.revokeObjectURL(url);
+  }catch{
+    for(const item of ready){dlOne(item.id);await new Promise(r=>setTimeout(r,100));}
+  }
+  btn.disabled=false;btn.innerHTML=`Download All (<span id="dc">${ready.length}</span>)`;
+}
+
+function loadZip(){
+  return new Promise((res,rej)=>{
+    if(window.JSZip)return res();
+    const s=document.createElement('script');
+    s.src='https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js';
+    s.onload=res;s.onerror=rej;document.head.appendChild(s);
+  });
+}
+
+function fb(b){
+  if(b<1024)return b+' B';
+  if(b<1048576)return(b/1024).toFixed(1)+' KB';
+  return(b/1048576).toFixed(2)+' MB';
+}
+</script>
+</body>
+</html>
